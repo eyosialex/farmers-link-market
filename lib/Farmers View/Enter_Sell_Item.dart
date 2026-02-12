@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/Farmers%20View/Cloudnary_Store.dart';
 import 'package:linkedfarm/Farmers%20View/FireStore_Config.dart';
@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:linkedfarm/Services/farm_persistence_service.dart';
 import 'package:linkedfarm/Services/local_storage_service.dart';
-import 'package:linkedfarm/Services/wifi_share_service.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -645,7 +644,7 @@ class _SellItemState extends State<SellItem> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           image: DecorationImage(
-                            image: FileImage(_selectedImages[newImageIndex]),
+                            image: getImageProviderFromFile(_selectedImages[newImageIndex].path),
                             fit: BoxFit.cover,
                           ),
                         ),

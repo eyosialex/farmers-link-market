@@ -2,12 +2,13 @@ import 'package:linkedfarm/Farmers%20View/Enter_Sell_Item.dart';
 import 'package:linkedfarm/Farmers%20View/FireStore_Config.dart';
 import 'package:linkedfarm/Farmers%20View/Sell_Item_Model.dart';
 import 'package:linkedfarm/Services/local_storage_service.dart';
-import 'package:linkedfarm/Services/wifi_share_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
+// import 'package:universal_io/io.dart';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:provider/provider.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart'; // for kIsWeb
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -80,11 +81,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
       ),
-      body: Consumer<LocalStorageService>(
-        builder: (context, localStorage, child) {
-          final products = localStorage.getAllProducts()
-              .where((p) => p.sellerId == currentUser.uid)
-              .toList();
+      body: StreamBuilder<List<AgriculturalItem>>(
+        stream: _firestoreService.getAgriculturalItemsBySeller(currentUser.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+
+          final products = snapshot.data ?? [];
 
           if (products.isEmpty) {
             return Center(
@@ -149,12 +157,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 width: 80,
                 height: 80,
                 color: Colors.grey[200],
+                // Fixed: Use abstraction to handle platform specific image loading
                 child: (product.localImagePaths != null && product.localImagePaths!.isNotEmpty)
-                    ? Image.file(
-                        File(product.localImagePaths![0]),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported),
-                      )
+? getImageFromFile(product.localImagePaths![0])
                     : (product.imageUrls != null && product.imageUrls!.isNotEmpty)
                         ? Image.network(
                             product.imageUrls![0],
@@ -170,67 +175,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _navigateToEdit(product);
-                          } else if (value == 'delete') {
-                            _deleteProduct(product);
-                          } else if (value == 'propagate') {
-                            _showPropagateDialog(product);
-                          }
-                        },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                          PopupMenuItem<String>(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit, color: Colors.green),
-                                SizedBox(width: 8),
-                                Text(AppLocalizations.of(context)!.editAction),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'propagate',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.wifi_tethering, color: Colors.orange),
-                                const SizedBox(width: 8),
-                                Text(AppLocalizations.of(context)!.shareNearbyAction),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Row(
-                                                     children: [
-                                const Icon(Icons.delete, color: Colors.red),
-                                const SizedBox(width: 8),
-                                Text(AppLocalizations.of(context)!.deleteAction),
-                              ],
-                            ),
-                          ),
-                        ],
-                        icon: const Icon(Icons.more_vert),
-                      ),
-                    ],
-                  ),
-                  Text(
+                      ContextMenuButton(product),
+                      Text(
                     product.category,
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
@@ -364,95 +310,41 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           ],
         ),
       ),
-    ),
-  );
+    ));
   }
 
-  void _showPropagateDialog(AgriculturalItem product) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.shareWifiTitle),
-        content: FutureBuilder(
-          future: Provider.of<WifiShareService>(context, listen: false)
-              .discoverPeers(timeout: const Duration(seconds: 2)),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text("Searching nearby farmers..."),
-                  SizedBox(height: 12),
-                  LinearProgressIndicator(),
-                ],
-              );
-            }
-
-            final services = (snapshot.data as List?)?.cast<dynamic>() ?? const [];
-            if (services.isEmpty) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(AppLocalizations.of(context)!.enterFarmerIpLabel),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "No nearby device found.\nMake sure both phones are connected to the same Wi‑Fi/hotspot.",
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              );
-            }
-
-            return SizedBox(
-              width: double.maxFinite,
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: services.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  final s = services[i];
-                  // Prefer IP address if available; otherwise use hostname
-                  String host = '';
-                  if (s.addresses != null && s.addresses!.isNotEmpty) {
-                    host = s.addresses!.first.address;
-                  } else if (s.hostname != null) {
-                    host = s.hostname!;
-                  }
-                  final title = (s.name?.toString().isNotEmpty == true) ? s.name.toString() : "Nearby farmer";
-                  return ListTile(
-                    leading: const Icon(Icons.wifi_tethering, color: Colors.orange),
-                    title: Text(title),
-                    subtitle: Text(host.isNotEmpty ? host : "hostname"),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      _showSnackBar("Connecting to $title...");
-
-                      final wifiService = Provider.of<WifiShareService>(context, listen: false);
-                      final success = await wifiService.sendProductBundle(product, host);
-
-                      if (success) {
-                        _showSnackBar("✅ ${AppLocalizations.of(context)!.propagatedSuccess}");
-                      } else {
-                        _showSnackBar("❌ Failed to connect");
-                      }
-                    },
-                  );
-                },
-              ),
-            );
-          },
+  Widget ContextMenuButton(AgriculturalItem product) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'edit') {
+          _navigateToEdit(product);
+        } else if (value == 'delete') {
+          _deleteProduct(product);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit, color: Colors.green),
+              SizedBox(width: 8),
+              Text(AppLocalizations.of(context)!.editAction),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancelAction)),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showSnackBar("Tip: open again to rescan nearby farmers.");
-            },
-            child: const Text("Rescan"),
-          )
-        ],
-      ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              const Icon(Icons.delete, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(AppLocalizations.of(context)!.deleteAction),
+            ],
+          ),
+        ),
+      ],
+      icon: const Icon(Icons.more_vert),
     );
   }
 
@@ -525,9 +417,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       // Actually MyProductsScreen uses Consumer<LocalStorageService> which might not see Firestore changes immediately unless synced.
       // But the seller usually manages their own items which are in localStorage.
       
-      final localStorage = Provider.of<LocalStorageService>(context, listen: false);
-      final updatedProduct = product.copyWith(quantity: newQuantity);
-      await localStorage.saveProduct(updatedProduct);
+      // final localStorage = Provider.of<LocalStorageService>(context, listen: false);
+      // final updatedProduct = product.copyWith(quantity: newQuantity);
+      // await localStorage.saveProduct(updatedProduct);
       
       _showSnackBar(AppLocalizations.of(context)!.quantityUpdated);
     } else {

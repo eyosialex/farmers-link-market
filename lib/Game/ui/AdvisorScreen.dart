@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
@@ -79,12 +79,7 @@ class AiAdvisorTab extends StatelessWidget {
                 if (lastLog?.photoUrl != null)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    child: Image.file(
-                      File(lastLog!.photoUrl!),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                    child: getImageFromFile(lastLog!.photoUrl!),
                   )
                 else
                   Container(

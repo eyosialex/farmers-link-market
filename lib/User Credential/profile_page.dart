@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/User%20Credential/usermodel.dart';
 import 'package:linkedfarm/User%20Credential/userfirestore.dart';

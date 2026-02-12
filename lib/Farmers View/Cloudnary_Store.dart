@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 

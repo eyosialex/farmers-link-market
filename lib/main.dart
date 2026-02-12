@@ -1,4 +1,4 @@
-
+import 'package:flutter/foundation.dart';
 import 'package:linkedfarm/User%20Credential/auth_gate.dart';
 import 'package:linkedfarm/User%20Credential/log_in_or_register.dart';
 import 'package:flutter/material.dart';
@@ -9,39 +9,31 @@ import 'package:provider/provider.dart';
 import 'package:linkedfarm/Game/models/game_state.dart';
 
 import 'package:linkedfarm/Services/local_storage_service.dart';
-import 'package:linkedfarm/Services/wifi_share_service.dart';
-import 'package:linkedfarm/Services/sync_service.dart';
 import 'package:linkedfarm/Farmers%20View/FireStore_Config.dart';
 import 'package:linkedfarm/Services/locale_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
 import 'package:linkedfarm/l10n/fallback_localization.dart';
 
+import 'package:linkedfarm/firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
-  // Initialize Offline Services
-  await LocalStorageService.init();
+  // Initialize Services
+  await LocalStorageService.init(); // Safe for web (Hive)
   final localStorage = LocalStorageService();
   final firestoreService = FirestoreService();
-  final wifiService = WifiShareService(localStorage);
-  final syncService = SyncService(localStorage, firestoreService);
-
-  // Start P2P server in background
-  wifiService.startServer();
-  
-  // Start monitoring internet for sync
-  syncService.startMonitoring();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameState()),
         ChangeNotifierProvider<LocalStorageService>.value(value: localStorage),
-        Provider<WifiShareService>.value(value: wifiService),
         Provider<FirestoreService>.value(value: firestoreService),
-        Provider<SyncService>.value(value: syncService),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
       child: const MyApp(),

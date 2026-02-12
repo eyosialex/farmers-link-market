@@ -1,6 +1,6 @@
 import 'package:linkedfarm/Chat/chat_model.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/User%20Credential/profile_page.dart';
 import 'package:linkedfarm/User%20Credential/usermodel.dart';

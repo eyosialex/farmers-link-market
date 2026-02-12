@@ -12,7 +12,7 @@ import 'package:location/location.dart';
 import 'package:linkedfarm/Services/local_storage_service.dart';
 import 'package:provider/provider.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
-import 'dart:io';
+import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 
 // Product List Screen - Shows all products
 class ProductListScreen extends StatefulWidget {
@@ -366,11 +366,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               topRight: Radius.circular(16),
                             ),
                             child: (product.localImagePaths != null && product.localImagePaths!.isNotEmpty)
-                                ? Image.file(
-                                    File(product.localImagePaths!.first),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
-                                  )
+                                ? getImageFromFile(product.localImagePaths!.first)
                                 : Image.network(
                                     product.imageUrls!.first,
                                     fit: BoxFit.cover,
@@ -1013,23 +1009,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: hasLocal
-                        ? Image.file(
-                            File(localPaths[index]),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                                    SizedBox(height: 8),
-                                    Text('Failed to load image'),
-                                  ],
-                                ),
-                              );
-                            },
-                          )
+                        ? getImageFromFile(localPaths[index])
                         : Image.network(
                             remoteUrls[index],
                             fit: BoxFit.cover,
