@@ -6,13 +6,13 @@ import 'package:linkedfarm/Chat/widgets/media_preview.dart';
 import 'package:intl/intl.dart';
 
 class MessageBubble extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final BaseMessage message;
   final bool isMe;
   final String? senderName;
 
   const MessageBubble({
     super.key,
-    required this.data,
+    required this.message,
     required this.isMe,
     this.senderName,
   });
@@ -23,12 +23,7 @@ class MessageBubble extends StatelessWidget {
     var textColor = isMe ? Colors.white : Colors.black87;
     var alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
 
-    var typeStr = data['messageType'] ?? 'text';
-    MessageType type = MessageType.values.byName(typeStr);
-    String? mediaUrl = data['mediaUrl'];
-    String? fileName = data['fileName'];
-    dynamic timestampData = data['timestamp'];
-    DateTime timestamp = timestampData is Timestamp ? timestampData.toDate() : DateTime.now();
+    DateTime timestamp = message.timestamp.toDate();
 
     return Container(
       alignment: alignment,
@@ -66,18 +61,21 @@ class MessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
-            if (type == MessageType.text)
+            // Polymorphic rendering
+            if (message is TextMessage)
               MarkdownBody(
-                data: data['message'],
+                data: (message as TextMessage).content,
                 styleSheet: MarkdownStyleSheet(
                   p: TextStyle(fontSize: 16, color: textColor),
                 ),
               )
-            else
+            else if (message is MediaMessage)
               MediaPreview(
-                type: type,
-                url: mediaUrl,
-                fileName: fileName,
+                type: message is ImageMessage ? MessageType.image :
+                      message is VideoMessage ? MessageType.video :
+                      message is AudioMessage ? MessageType.audio : MessageType.pdf,
+                url: (message as MediaMessage).mediaUrl,
+                fileName: (message as MediaMessage).fileName,
                 textColor: textColor,
               ),
             const SizedBox(height: 4),
@@ -94,3 +92,4 @@ class MessageBubble extends StatelessWidget {
     );
   }
 }
+

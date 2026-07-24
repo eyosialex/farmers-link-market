@@ -176,15 +176,15 @@ class _WantedProductsScreenState extends State<WantedProductsScreen> {
                   await _persistence.saveWantedProduct(newRequest);
                   
                   // Create a notification for the user
-                  final notification = AppNotification(
+                  final notification = SystemNotification(
                     id: "",
                     title: "Request Posted",
                     message: "You have successfully requested ${productController.text}.",
                     timestamp: DateTime.now(),
-                    type: 'system',
                     isRead: false,
                   );
                   await _persistence.saveNotification(notification);
+
 
                   NotificationService.playNotificationSound();
                   Navigator.pop(context);

@@ -1,5 +1,6 @@
 
 import 'package:linkedfarm/Dlivery%20View/list_deliveryavailable.dart';
+import 'package:linkedfarm/Main%20Office/main_office_page.dart';
 import 'package:linkedfarm/Farmers%20View/Enter_Sell_Item.dart';
 import 'package:linkedfarm/Vendors%20View/product.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:linkedfarm/User%20Credential/log_in_page.dart';
 import 'package:linkedfarm/Farmers%20View/Market_Prices.dart';
 import 'package:linkedfarm/Farmers%20View/My_Products.dart';
 import 'package:linkedfarm/Farmers%20View/advice_feed.dart';
+import 'package:linkedfarm/Farmers%20View/advisor_hub_screen.dart';
 import 'package:linkedfarm/Chat/chat_list.dart';
 import 'package:linkedfarm/Game/ui/game_dashboard.dart';
 import 'package:linkedfarm/Game/ui/land_selection_screen.dart';
@@ -20,6 +22,8 @@ import 'package:linkedfarm/Models/notification_model.dart';
 import 'package:linkedfarm/Services/locale_provider.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:linkedfarm/Farmers%20View/land_map_page.dart';
+import 'package:linkedfarm/Farmers%20View/OrderManagementScreen.dart';
 import 'dart:async';
 
 class FarmersHomePage extends StatefulWidget {
@@ -99,7 +103,7 @@ class _FarmersHomePageState extends State<FarmersHomePage> {
         'title': l10n.expertAdvice,
         'icon': Icons.school,
         'image': 'assets/advice.jpg',
-        'page': const AdviceFeedScreen(),
+        'page': const AdvisorHubScreen(),
         'gradient': const LinearGradient(
           colors: [Color(0xFFE91E63), Color(0xFFC2185B)],
           begin: Alignment.topLeft,
@@ -110,9 +114,31 @@ class _FarmersHomePageState extends State<FarmersHomePage> {
         'title': l10n.landPlanner,
         'icon': Icons.landscape,
         'image': 'assets/land_planner_realistic.jpg',
-        'page': const MyLandsScreen(),
+        'page': const LandMapPage(),
         'gradient': const LinearGradient(
           colors: [Color(0xFF3F51B5), Color(0xFF303F9F)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'title': "Main Office",
+        'icon': Icons.business,
+        'image': 'assets/hq_realistic.jpg',
+        'page': const MainOfficePage(),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF000000), Color(0xFF1B5E20)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'title': "Incoming Orders",
+        'icon': Icons.history_edu,
+        'image': 'assets/my_products.jpg', 
+        'page': const OrderManagementScreen(),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF795548), Color(0xFF5D4037)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

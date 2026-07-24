@@ -14,7 +14,10 @@ import 'package:linkedfarm/Models/notification_model.dart';
 import 'package:linkedfarm/Vendors%20View/Vendor_Price_Prediction.dart';
 import 'package:linkedfarm/Vendors%20View/Trusted_Farmers_Screen.dart';
 import 'package:linkedfarm/Vendors View/Shared_Delivery_Screen.dart';
-import 'package:linkedfarm/Vendors View/Vendor_Advisory_Screen.dart';
+import 'package:linkedfarm/Vendors%20View/Vendor_Advisory_Screen.dart';
+import 'package:linkedfarm/Vendors%20View/MyPurchasesScreen.dart';
+import 'package:linkedfarm/Main%20Office/main_office_page.dart';
+import 'package:linkedfarm/Vendors%20View/DeliveryTrackingHub.dart';
 
 import 'package:linkedfarm/Services/notification_service.dart';
 import 'dart:async';
@@ -47,12 +50,23 @@ class _vendors_pageState extends State<vendors_page> {
       ),
     },
     {
-      'title': 'Orders',
+      'title': 'Requests',
       'icon': Icons.shopping_cart,
       'image': 'assets/delivery.jpg',
       'page': const WantedProductsScreen(), // View market demand
       'gradient': const LinearGradient(
         colors: [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    },
+    {
+      'title': 'My Purchases',
+      'icon': Icons.assignment_turned_in,
+      'image': 'assets/product.png',
+      'page': const MyPurchasesScreen(),
+      'gradient': const LinearGradient(
+        colors: [Color(0xFF2D5A42), Color(0xFF1E3A34)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -75,6 +89,17 @@ class _vendors_pageState extends State<vendors_page> {
       'page': const TrustedFarmersScreen(),
       'gradient': const LinearGradient(
         colors: [Color(0xFF009688), Color(0xFF00796B)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    },
+    {
+      'title': 'Track Shipments',
+      'icon': Icons.gps_fixed,
+      'image': 'assets/delivery_realistic.jpg',
+      'page': const DeliveryTrackingHub(),
+      'gradient': const LinearGradient(
+        colors: [Color(0xFFF57C00), Color(0xFFE65100)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -108,6 +133,17 @@ class _vendors_pageState extends State<vendors_page> {
       'page': const ChatListScreen(),
       'gradient': const LinearGradient(
         colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    },
+    {
+      'title': 'Main Office',
+      'icon': Icons.business_rounded,
+      'image': 'assets/hq_realistic.jpg',
+      'page': const MainOfficePage(),
+      'gradient': const LinearGradient(
+        colors: [Color(0xFF000000), Color(0xFF1B5E20)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),

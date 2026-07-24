@@ -3,6 +3,8 @@ import '../../Services/farm_persistence_service.dart';
 import '../../Models/notification_model.dart';
 import 'package:intl/intl.dart';
 import 'package:linkedfarm/Shopper%20View/Sell_Input_Item.dart';
+import 'package:linkedfarm/Vendors%20View/MyPurchasesScreen.dart';
+import 'package:linkedfarm/Farmers%20View/OrderManagementScreen.dart';
 
 class NotificationCenterScreen extends StatefulWidget {
   const NotificationCenterScreen({super.key});
@@ -88,19 +90,37 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       child: GestureDetector(
         onTap: () {
           if (isUnread) _persistence.markNotificationAsRead(notification.id);
-          Navigator.push(
-             context,
-             MaterialPageRoute(builder: (context) => SellInputItem()),
-          );
+          
+          if (notification.orderId != null) {
+            // Check if user is a vendor or farmer to navigate correctly
+            // For now, most order notifications go to Purchases or Management
+            // We'll navigate to MyPurchasesScreen if it's a vendor-facing status, etc.
+            // But a safer way is to navigate to the specific order summary if we had one.
+            // For now, let's navigate to the main order lists.
+            
+            if (notification.title.contains("New Order") || notification.title.contains("Sale Completed")) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const OrderManagementScreen()),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyPurchasesScreen()),
+              );
+            }
+          } else if (notification.productId != null) {
+             // Navigate to product home or similar if needed
+          }
         },
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isUnread ? Colors.white : Colors.white.withOpacity(0.7),
+            color: isUnread ? Colors.white : Colors.white.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(16),
-            border: isUnread ? Border.all(color: Colors.green.withOpacity(0.3), width: 1.5) : null,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 5, spreadRadius: 1)],
+            border: isUnread ? Border.all(color: Colors.green.withValues(alpha: 0.3), width: 1.5) : null,
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 5, spreadRadius: 1)],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,6 +156,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       ),
     );
   }
+
 
   Widget _buildIcon(String type, bool unread) {
     IconData iconData;

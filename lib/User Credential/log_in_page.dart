@@ -1,4 +1,4 @@
-import 'package:linkedfarm/Dlivery%20View/Delivery_Home_Page.dart';
+import 'package:linkedfarm/Dlivery View/home_delivery.dart';
 import 'package:linkedfarm/Farmers%20View/Farmers_Home.dart';
 import 'package:linkedfarm/Vendors%20View/Product_Home.dart';
 import 'package:linkedfarm/Advisor%20View/Advisor_Home.dart';
@@ -74,7 +74,7 @@ class _LogInPageState extends State<LogInPage> {
                 homePage = const AdvisorHomePage();
                 break;
               case 'delivery':
-                homePage = const Delivery_Home_Page();
+                homePage = const HomeDelivery();
                 break;
               case 'shopper':
                 homePage = const ShopperHomePage();
@@ -99,10 +99,18 @@ class _LogInPageState extends State<LogInPage> {
         message = l10n.wrongPassword;
       } else if (e.code == 'invalid-email') {
         message = l10n.invalidEmailAddress;
+      } else if (e.code == 'network-request-failed') {
+        message = l10n.networkError;
+      } else {
+        message = "${l10n.somethingWentWrong}: [${e.code}] ${e.message}";
       }
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
+      );
+    } on FirebaseException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${AppLocalizations.of(context)!.somethingWentWrong}: [${e.code}] ${e.message}")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -183,10 +191,10 @@ class _LogInPageState extends State<LogInPage> {
                               ),
                             ],
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              "Login",
-                              style: TextStyle(
+                              AppLocalizations.of(context)!.loginButton,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

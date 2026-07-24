@@ -12,7 +12,6 @@ class VendorPricePredictionScreen extends StatefulWidget {
 }
 
 class _VendorPricePredictionScreenState extends State<VendorPricePredictionScreen> {
-  final GeminiService _geminiService = GeminiService();
   String _aiAdvice = "Analyzing market trends...";
   bool _isLoading = true;
   String _selectedCrop = "Wheat";
@@ -34,7 +33,7 @@ class _VendorPricePredictionScreenState extends State<VendorPricePredictionScree
     setState(() => _isLoading = true);
     try {
       final prompt = "Act as an agricultural economist. Given current price of $_selectedCrop is ${_marketData[_selectedCrop]!.last} Birr/quintal and it has been rising steadily for 6 weeks, predict next week's price and give inventory advice for a vendor.";
-      final response = await _geminiService.getChatResponse(prompt);
+      final response = await GeminiService.getChatResponse(prompt);
       setState(() {
         _aiAdvice = response;
         _isLoading = false;

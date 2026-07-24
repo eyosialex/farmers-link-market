@@ -37,10 +37,10 @@ class FirebaseAuthService {
   }
   Future<void> _updateUserStatus(String uid, bool isOnline) async {
     try {
-      await _firestore.collection("Usersstore").doc(uid).update({
+      await _firestore.collection("Usersstore").doc(uid).set({
         'isOnline': isOnline,
         'lastseen': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       print("Error updating user status: $e");
     }

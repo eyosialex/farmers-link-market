@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedFarm | Elite Command & Operations</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF for Reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-crown"></i>
+                    <span>LF HQ Elite</span>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-page="dashboard"><i class="fas fa-chart-pie"></i><span>Global Intel</span></li>
+                <li data-page="users"><i class="fas fa-user-gear"></i><span>User Management</span></li>
+                <li data-page="products"><i class="fas fa-store"></i><span>Market & Shop</span></li>
+                <li data-page="advice"><i class="fas fa-lightbulb"></i><span>Expert Advice</span></li>
+                <li data-page="deliveries"><i class="fas fa-location-crosshairs"></i><span>Logistics Live</span></li>
+                <li data-page="wanted"><i class="fas fa-hand-holding-dollar"></i><span>Vendor Requests</span></li>
+                <li data-page="communications"><i class="fas fa-tower-broadcast"></i><span>Smart Comms</span></li>
+                <li data-page="reports"><i class="fas fa-file-invoice-dollar"></i><span>Daily Analytics</span></li>
+            </ul>
+            <div class="sidebar-info">
+                <div class="db-status">
+                    <span class="pulse green"></span>
+                    <span>Systems Online</span>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin+HQ&background=4ADE80&color=0B1A12" alt="Admin">
+                    <div class="profile-info">
+                        <strong>Lead Command</strong>
+                        <span>Full Oversight Access</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearch" placeholder="Command Search: ID, Name, Phone...">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-btn theme-toggle" title="Toggle Vision Mode"><i
+                            class="fas fa-moon"></i></button>
+                    <div id="connectionStatus" class="status-indicator">
+                        <span class="dot connected"></span>
+                        <span>Node Live</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="page-content" class="fade-in">
+
+                <!-- ─── DASHBOARD ─── -->
+                <div id="dashboard" class="page-section active">
+                    <div class="welcome-header">
+                        <h1>Operations Intelligence</h1>
+                        <p>Aggregated real-time metrics across all LinkedFarm sectors.</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fas fa-user-group"></i></div>
+                            <div class="stat-data">
+                                <span class="label">Total Actors</span>
+                                <h3 id="statTotalUsers">...</h3>
+                                <span class="trend">Live Accounts</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fas fa-wheat-awn"></i></div>
+                            <div class="stat-data">
+                                <span class="label">Inventory Flow</span>
+                                <h3 id="statTotalProducts">...</h3>
+                                <span class="trend">Active Listings</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange"><i class="fas fa-truck-fast"></i></div>
+                            <div class="stat-data">
+                                <span class="label">Logistics Nodes</span>
+                                <h3 id="statTotalDeliveries">0/0</h3>
+                                <span class="trend">Online/Total</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fas fa-bell"></i></div>
+                            <div class="stat-data">
+                                <span class="label">Global Comms</span>
+                                <h3 id="statTotalNotifs">...</h3>
+                                <span class="trend">Broadcasts Sent</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-container large">
+                            <h3>Business Performance Index</h3>
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                        <div class="chart-container small">
+                            <h3>Market Distribution</h3>
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── USER MANAGEMENT ─── -->
+                <div id="users" class="page-section">
+                    <div class="section-header-flex">
+                        <div>
+                            <h1>Actor Registry</h1>
+                            <p>Manage Farmers, Vendors, Shoppers, and Delivery Agents.</p>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-primary" onclick="window.fetchUsers()"><i class="fas fa-sync"></i> Sync
+                                Data</button>
+                        </div>
+                    </div>
+
+                    <div class="data-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Identity</th>
+                                    <th>Actor Type</th>
+                                    <th>Verification</th>
+                                    <th>Last Activity</th>
+                                    <th>Operational Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ─── PRODUCTS ─── -->
+                <div id="products" class="page-section">
+                    <div class="section-header-flex">
+                        <div>
+                            <h1>Marketplace & Shop</h1>
+                            <p>Complete control over all agricultural and input products.</p>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> New
+                                Listing</button>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="productGrid">
+                        <!-- JS Populated -->
+                    </div>
+                </div>
+
+                <!-- ─── COMMUNICATIONS ─── -->
+                <div id="communications" class="page-section">
+                    <div class="welcome-header">
+                        <h1>Smart Communication Node</h1>
+                        <p>Targeted notifications for individuals, groups, or the entire community.</p>
+                    </div>
+
+                    <div class="comm-grid">
+                        <div class="comm-card glass">
+                            <h3>Targeted Broadcast</h3>
+                            <div class="form-group">
+                                <label>Target Actors</label>
+                                <select id="commTarget">
+                                    <option value="all">Global (Everyone)</option>
+                                    <option value="farmer">All Farmers</option>
+                                    <option value="vendor">All Vendors</option>
+                                    <option value="driver">All Delivery Partners</option>
+                                    <option value="advisor">All Advisors</option>
+                                    <option value="individual">Specific UI Target (Paste UID)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="uidTargetField" style="display:none">
+                                <label>Target UID</label>
+                                <input type="text" id="targetUidInput" placeholder="Enter User ID...">
+                            </div>
+                            <div class="form-group">
+                                <label>Message Title</label>
+                                <input type="text" id="commTitle" placeholder="Pulse Alert Title...">
+                            </div>
+                            <div class="form-group">
+                                <label>Detailed Intel</label>
+                                <textarea id="commBody" rows="4" placeholder="Message content..."></textarea>
+                            </div>
+                            <button class="btn-primary large" onclick="sendSmartBroadcast()"><i
+                                    class="fas fa-paper-plane"></i> Launch Signal</button>
+                        </div>
+
+                        <div class="comm-logs glass">
+                            <h3>Broadcast History</h3>
+                            <div id="commHistory" class="history-list">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── DAILY REPORTS ─── -->
+                <div id="reports" class="page-section">
+                    <div class="welcome-header">
+                        <h1>Daily Operational Reports</h1>
+                        <p>Generate comprehensive business intelligence PDFs for stakeholders.</p>
+                    </div>
+                    <div class="report-controls glass">
+                        <div class="report-card">
+                            <i class="fas fa-file-pdf"></i>
+                            <h3>Market Snapshot</h3>
+                            <p>Daily report of users, products, and active deliveries.</p>
+                            <button class="btn-primary" onclick="generateDailyPDF()"><i class="fas fa-download"></i>
+                                Generate PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="productModal" class="modal">
+        <div class="modal-content glass">
+            <h2>Manage Product Listing</h2>
+            <form id="productForm">
+                <input type="hidden" id="editProductId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="prodName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="prodCategory">
+                            <option value="Crops">Crops</option>
+                            <option value="Vegetables">Vegetables</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Grains">Grains</option>
+                            <option value="Inputs">Agricultural Inputs</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (ETB)</label>
+                        <input type="number" id="prodPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" id="prodUnit" placeholder="kg, quintal, piece..." required>
+                    </div>
+                    <div class="form-group full">
+                        <label>Description</label>
+                        <textarea id="prodDesc" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Save Product</button>
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal (Reused from previous) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content glass">
+            <h2>Identity Audit</h2>
+            <div id="userDetail" class="detail-box"></div>
+            <div id="rawJsonView" class="json-box"></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="toggleJson()">Switch View</button>
+                <button class="btn-danger" id="btnBanUser">Suspend Account</button>
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

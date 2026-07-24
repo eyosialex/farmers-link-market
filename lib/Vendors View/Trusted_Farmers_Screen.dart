@@ -63,8 +63,13 @@ class _TrustedFarmersScreenState extends State<TrustedFarmersScreen> {
         }
         
         final farmers = snapshot.data?.where((f) {
-          if (_selectedCrop == "All") return true;
-          return f.crops?.toLowerCase().contains(_selectedCrop.toLowerCase()) ?? false;
+           String? farmerCrops;
+           if (f is FarmerUser) {
+             farmerCrops = f.crops;
+           }
+           
+           if (_selectedCrop == "All") return true;
+           return farmerCrops?.toLowerCase().contains(_selectedCrop.toLowerCase()) ?? false;
         }).toList() ?? [];
 
         if (farmers.isEmpty) {
@@ -81,6 +86,11 @@ class _TrustedFarmersScreenState extends State<TrustedFarmersScreen> {
   }
 
   Widget _buildFarmerCard(UserModel farmer) {
+    String? farmerCrops;
+    if (farmer is FarmerUser) {
+      farmerCrops = farmer.crops;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(16),
@@ -103,7 +113,8 @@ class _TrustedFarmersScreenState extends State<TrustedFarmersScreen> {
               children: [
                 Text(farmer.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
-                Text(farmer.crops ?? "Diversified Farming", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(farmerCrops ?? "Diversified Farming", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+
                 const SizedBox(height: 8),
                 Row(
                   children: [

@@ -1,4 +1,4 @@
-import 'package:linkedfarm/Dlivery%20View/Delivery_Home_Page.dart';
+import 'package:linkedfarm/Dlivery View/home_delivery.dart';
 import 'package:linkedfarm/Advisor%20View/Advisor_Home.dart';
 import 'package:linkedfarm/Farmers%20View/Farmers_Home.dart';
 import 'package:linkedfarm/Vendors%20View/Product_Home.dart';
@@ -152,7 +152,7 @@ final TextEditingController _qualificationController = TextEditingController();
       } else if (_userData!['userType'] == 'vendor') {
         targetPage = const vendors_page();
       } else if (_userData!['userType'] == 'delivery') {
-        targetPage = const Delivery_Home_Page();
+        targetPage = const HomeDelivery();
       } else if (_userData!['userType'] == 'advisor') {
         targetPage = const AdvisorHomePage();
    

@@ -65,19 +65,46 @@ class _RegistrationPageState extends State<RegistrationPage> {
       final user = userCredential.user;
 
       if (user != null) {
-        // Create user profile in Firestore
-        final userModel = UserModel(
-          uid: user.uid,
-          email: _email,
-          fullName: _fullName,
-          phoneNumber: _phoneNumber,
-          userType: _selectedUserType!,
-          profileCompleted: false,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
+        UserModel userModel;
+        
+        switch (_selectedUserType) {
+          case 'farmer':
+            userModel = FarmerUser(
+              uid: user.uid,
+              email: _email,
+              fullName: _fullName,
+              phoneNumber: _phoneNumber,
+              profileCompleted: false,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            break;
+          case 'vendor':
+            userModel = VendorUser(
+              uid: user.uid,
+              email: _email,
+              fullName: _fullName,
+              phoneNumber: _phoneNumber,
+              profileCompleted: false,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            break;
+          default:
+            userModel = GenericAppUser(
+              uid: user.uid,
+              email: _email,
+              fullName: _fullName,
+              phoneNumber: _phoneNumber,
+              userType: _selectedUserType!,
+              profileCompleted: false,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+        }
 
         await _userRepository.createUser(userModel);
+
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.registrationSuccess)),
@@ -98,10 +125,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
         message = l10n.weakPassword;
       } else if (e.code == 'invalid-email') {
         message = l10n.invalidEmailAddress;
+      } else if (e.code == 'network-request-failed') {
+        message = l10n.networkError;
+      } else {
+        message = "${l10n.somethingWentWrong}: [${e.code}] ${e.message}";
       }
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
+      );
+    } on FirebaseException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("${AppLocalizations.of(context)!.somethingWentWrong}: [${e.code}] ${e.message}")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -255,10 +290,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               ),
                             ],
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              "Register",
-                              style: TextStyle(
+                              AppLocalizations.of(context)!.registerButton,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

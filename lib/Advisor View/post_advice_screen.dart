@@ -3,6 +3,7 @@ import 'package:linkedfarm/Advisor%20View/advice_model.dart';
 import 'package:linkedfarm/User%20Credential/userfirestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:linkedfarm/Services/gemini_service.dart';
 
 class PostAdviceScreen extends StatefulWidget {
   const PostAdviceScreen({super.key});
@@ -17,6 +18,7 @@ class _PostAdviceScreenState extends State<PostAdviceScreen> {
   final _contentController = TextEditingController();
   String _selectedCategory = 'Crop Care';
   bool _isLoading = false;
+  bool _isGeneratingAI = false;
 
   final List<String> _categories = [
     'Crop Care',
@@ -26,6 +28,40 @@ class _PostAdviceScreenState extends State<PostAdviceScreen> {
     'Equipment & Tech',
     'General',
   ];
+
+  Future<void> _generateAIAdvice() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a title first so AI can help!")),
+      );
+      return;
+    }
+
+    setState(() => _isGeneratingAI = true);
+
+    try {
+      final prompt = "You are an expert agricultural advisor. Write a professional, detailed, and helpful advice article for farmers titled: '${_titleController.text.trim()}' in the category of '$_selectedCategory'. Keep it educational and technical but easy to understand.";
+      final response = await GeminiService.getChatResponse(prompt);
+      
+      setState(() {
+        _contentController.text = response;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("AI suggestion generated!")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error generating AI advice: $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingAI = false);
+    }
+  }
 
   Future<void> _submitAdvice() async {
     if (!_formKey.currentState!.validate()) return;
@@ -59,90 +95,165 @@ class _PostAdviceScreenState extends State<PostAdviceScreen> {
         Navigator.pop(context); // Return to Dashboard
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error posting advice: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error posting advice: $e")),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Post New Advice"),
+        title: const Text("Create Expert Advice", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.green[800],
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Header Decoration
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.green[100]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline, color: Colors.green[800]),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        "Share your expertise with the farming community. Accurate advice helps everyone grow!",
+                        style: TextStyle(fontSize: 13, color: Colors.black87),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 25),
+
               // Title
+              const Text("Article Title", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
-                  labelText: "Title",
-                  hintText: "e.g., Best Practices for Maize Harvest",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  hintText: "e.g., Optimizing Irrigation for Wheat",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
                 validator: (val) => val!.isEmpty ? "Title is required" : null,
               ),
               const SizedBox(height: 20),
 
-              // Category Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: InputDecoration(
-                  labelText: "Category",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                items: _categories.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat));
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val!),
+              // Category & AI Assistant Row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Category", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: _selectedCategory,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          items: _categories.map((cat) {
+                            return DropdownMenuItem(value: cat, child: Text(cat, style: const TextStyle(fontSize: 14)));
+                          }).toList(),
+                          onChanged: (val) => setState(() => _selectedCategory = val!),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("AI Help", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.transparent)),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 52,
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isGeneratingAI ? null : _generateAIAdvice,
+                            icon: _isGeneratingAI 
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.purple))
+                              : const Icon(Icons.auto_awesome, size: 18),
+                            label: const Text("Draft", style: TextStyle(fontSize: 12)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple[50],
+                              foregroundColor: Colors.purple[800],
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.purple[100]!)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
 
               // Content Body
+              const Text("Article Content", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _contentController,
                 decoration: InputDecoration(
-                  labelText: "Content",
-                  hintText: "Write your detailed advice here...",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  hintText: "Write your detailed advice here or use AI help to generate a draft...",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: Colors.white,
                   alignLabelWithHint: true,
                 ),
-                maxLines: 10,
+                maxLines: 12,
                 validator: (val) => val!.isEmpty ? "Content is required" : null,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               // Submit Button
               SizedBox(
-                height: 50,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitAdvice,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.green[700],
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 2,
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Publish Advice", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      : const Text("Publish Expert Advice", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -150,3 +261,4 @@ class _PostAdviceScreenState extends State<PostAdviceScreen> {
     );
   }
 }
+

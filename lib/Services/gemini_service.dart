@@ -1,11 +1,44 @@
-
+import 'dart:typed_data';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class GeminiService {
-  // IMPORTANT: The user should provide their own API key. 
-  // For training/demo purposes, you might use an environment variable or a secure vault.
-  static const String _apiKey = "AIzaSyCltn91mSr1A_emvctgz-aMfBqSt_1qX-Q"; 
+  static const String _apiKey = "AIzaSyCltn91mSr1A_emvctgz-aMfBqSt_1qX-Q";
 
+  /// Analyzes a crop image for pests, diseases, and treatment recommendations.
+  static Future<String> analyzeCropImage(Uint8List imageBytes, String userQuestion) async {
+    if (_apiKey.isEmpty || _apiKey.startsWith("YOUR")) {
+      return "Gemini API Key not configured. AI diagnosis is unavailable.";
+    }
+
+    try {
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apiKey);
+      final prompt = """
+        You are an expert AI Agronomist. 
+        Analyze the attached image of this crop and address the following user question: '$userQuestion'.
+        
+        Specifically:
+        1. Identify any visible pests, fungal infections, or nutrient deficiencies.
+        2. Recommend specific Pesticides, Herbicides, or Fungicides if needed.
+        3. Provide clear instructions on how to treat the situation.
+        
+        Keep your advice professional and technical but easy for a farmer to follow.
+      """;
+
+      final content = [
+        Content.multi([
+          TextPart(prompt),
+          DataPart('image/jpeg', imageBytes),
+        ])
+      ];
+
+      final response = await model.generateContent(content);
+      return response.text ?? "Unable to analyze the image.";
+    } catch (e) {
+      return "Error during AI image analysis: $e";
+    }
+  }
+
+  /// Immersive predictive advice for the farming simulation.
   static Future<String> getFarmingAdvice({
     required String soilType,
     required String cropName,
@@ -14,51 +47,40 @@ class GeminiService {
     required double nutrients,
     required double health,
   }) async {
-    if (_apiKey.isEmpty || _apiKey == "YOUR_GEMINI_API_KEY") {
-      return "Gemini API Key not configured. Using rule-based logic: Keep watering and fertilizing regularly!";
+    if (_apiKey.isEmpty || _apiKey.startsWith("YOUR")) {
+      return "Gemini API Key not configured.";
     }
 
     try {
-      final model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: _apiKey);
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apiKey);
       
       final prompt = """
         You are an expert AI Farming Advisor. 
-        A farmer is playing a virtual farming simulation.
-        Current details:
-        - Soil Type: $soilType
-        - Crop: $cropName
-        - Day of Growth: $day
-        - Soil Moisture: ${(moisture * 100).toInt()}%
-        - Soil Nutrients: ${(nutrients * 100).toInt()}%
-        - Crop Health: ${(health * 100).toInt()}%
-
-        Based on these stats, give a very short, encouraging, and professional advice (max 2 sentences) on what the farmer should do next to maximize yield. 
-        Also, predict if the final yield will be "High", "Average", or "Low".
+        Current farm state:
+        - Soil: $soilType, Crop: $cropName, Day: $day/5
+        - Health: ${(health * 100).toInt()}%
+        Give 5-day predictive advice.
       """;
 
-      final content = [Content.text(prompt)];
-      final response = await model.generateContent(content);
-      
-      return response.text ?? "Unable to get advice at the moment.";
+      final response = await model.generateContent([Content.text(prompt)]);
+      return response.text ?? "Unable to get advice.";
     } catch (e) {
-      return "Error connecting to Gemini: $e";
+      return "Error: $e";
     }
   }
 
-  // General chat response method for vendor advisory and price prediction
-  Future<String> getChatResponse(String prompt) async {
-    if (_apiKey.isEmpty || _apiKey == "YOUR_GEMINI_API_KEY" || _apiKey == "PASTE_YOUR_NEW_KEY_HERE") {
-      return "Gemini API Key not configured. Please add your API key to use AI features.";
+  /// General chat interaction.
+  static Future<String> getChatResponse(String prompt) async {
+    if (_apiKey.isEmpty || _apiKey.startsWith("YOUR")) {
+      return "Gemini API Key not configured.";
     }
 
     try {
-      final model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: _apiKey);
-      final content = [Content.text(prompt)];
-      final response = await model.generateContent(content);
-      
-      return response.text ?? "Unable to get response at the moment.";
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apiKey);
+      final response = await model.generateContent([Content.text(prompt)]);
+      return response.text ?? "Unable to get response.";
     } catch (e) {
-      return "Error connecting to Gemini: $e";
+      return "Error: $e";
     }
   }
 }

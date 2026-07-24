@@ -7,7 +7,7 @@ import 'package:linkedfarm/Farmers%20View/Farmers_Home.dart';
 import 'package:linkedfarm/Vendors%20View/Product_Home.dart';
 import 'package:linkedfarm/Advisor%20View/Advisor_Home.dart';
 import 'package:linkedfarm/Shopper%20View/Shopper_Home.dart';
-import 'package:linkedfarm/Dlivery%20View/Delivery_Home_Page.dart';
+import 'package:linkedfarm/Dlivery%20View/home_delivery.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -58,7 +58,7 @@ class AuthGate extends StatelessWidget {
               case 'advisor':
                 return const AdvisorHomePage();
               case 'delivery':
-                return const Delivery_Home_Page();
+                return const HomeDelivery();
               case 'shopper':
                 return const ShopperHomePage();
               default:

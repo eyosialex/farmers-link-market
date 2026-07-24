@@ -1,18 +1,22 @@
-import 'dart:math';
 import 'package:linkedfarm/Farmers%20View/FireStore_Config.dart';
 import 'package:linkedfarm/Vendors%20View/Map_Location_Calculatore.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/Farmers%20View/Sell_Item_Model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:linkedfarm/Chat/chat_screen.dart';
+import 'package:linkedfarm/Models/order_model.dart';
 import 'package:location/location.dart';
 import 'package:linkedfarm/Services/local_storage_service.dart';
 import 'package:provider/provider.dart';
 import 'package:linkedfarm/l10n/app_localizations.dart';
 import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:linkedfarm/Farmers%20View/Cloudnary_Store.dart';
+import 'package:linkedfarm/Farmers%20View/Position_Sell_Item.dart';
 
 // Product List Screen - Shows all products
 class ProductListScreen extends StatefulWidget {
@@ -23,7 +27,6 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Stream<List<AgriculturalItem>> _productsStream;
   final TextEditingController _searchController = TextEditingController();
   final List<String> _categories = [
@@ -81,7 +84,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       // Search filter
       final matchesSearch = _searchQuery.isEmpty ||
           product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (product.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          (product.description.toLowerCase().contains(_searchQuery.toLowerCase()));
       
       // Category filter
       final matchesCategory = _selectedCategory.isEmpty || 
@@ -693,6 +696,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Map<String, dynamic>> _nearbyDrivers = [];
   bool _loadingDrivers = false;
 
+  // Delivery logistics
+  Map<String, double>? _dropoffLocation;
+  String? _dropoffAddress;
+  String? _selectedDriverId;
+  String? _selectedDriverName;
+
   @override
   void initState() {
     super.initState();
@@ -873,6 +882,351 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final shareText = 'Check out ${_item!.name} - ${_item!.price} ETB';
     // You can use packages like share_plus for sharing
   }
+
+  void _showOrderDialog(AgriculturalItem item) {
+    int quantity = 1;
+    String paymentMethod = 'Bank Transfer';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 25, right: 25, top: 25),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("PLACE YOUR ORDER", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A34))),
+              const SizedBox(height: 8),
+              Text("Product: ${item.name}", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+              const SizedBox(height: 24),
+              const Text("Quantity", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: quantity > 1 ? () => setModalState(() => quantity--) : null,
+                    icon: const Icon(Icons.remove_circle_outline),
+                  ),
+                  Text("$quantity ${item.unit}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    onPressed: quantity < item.quantity ? () => setModalState(() => quantity++) : null,
+                    icon: const Icon(Icons.add_circle_outline),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text("Payment Method", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 12),
+              _paymentOptionTile("Manual Bank Transfer", "Upload screenshot of bank transfer", Icons.account_balance_outlined, "Bank Transfer", paymentMethod, (val) => setModalState(() => paymentMethod = val)),
+              
+              if (item.deliveryAvailable) ...[
+                const SizedBox(height: 24),
+                const Text("Select Delivery Location", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MapTestScreen(
+                          onLocationSelected: (lat, lng, address) {
+                            setModalState(() {
+                              _dropoffLocation = {'lat': double.parse(lat), 'lng': double.parse(lng)};
+                              _dropoffAddress = address;
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.red),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(_dropoffAddress ?? "Tap to pin dropoff location",
+                              style: TextStyle(color: _dropoffAddress == null ? Colors.grey : Colors.black, fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                if (_nearbyDrivers.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  const Text("Select Preffered Driver (Optional)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 90,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _nearbyDrivers.length,
+                      itemBuilder: (context, idx) {
+                        final driver = _nearbyDrivers[idx];
+                        bool isSelected = _selectedDriverId == driver['id'];
+                        return GestureDetector(
+                          onTap: () => setModalState(() {
+                            if (isSelected) {
+                              _selectedDriverId = null;
+                              _selectedDriverName = null;
+                            } else {
+                              _selectedDriverId = driver['id'];
+                              _selectedDriverName = driver['name'];
+                            }
+                          }),
+                          child: Container(
+                            width: 100,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: isSelected ? const Color(0xFF2D5A42) : Colors.grey[200]!),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 15,
+                                  backgroundColor: const Color(0xFF2D5A42),
+                                  child: const Icon(Icons.person, size: 15, color: Colors.white),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(driver['name'], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                                Text("${(driver['distance'] / 1000).toStringAsFixed(1)}km", style: const TextStyle(fontSize: 8, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showManualPaymentDialog(item, quantity);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D5A42),
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text("CONTINUE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paymentOptionTile(String title, String sub, IconData icon, String value, String current, Function(String) onChanged) {
+    bool isSelected = current == value;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? const Color(0xFF2D5A42) : Colors.grey[200]!, width: 2),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? const Color(0xFF2D5A42) : Colors.grey),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isSelected ? const Color(0xFF1E3A34) : Colors.black87)),
+                  Text(sub, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                ],
+              ),
+            ),
+            if (isSelected) const Icon(Icons.check_circle, color: Color(0xFF2D5A42)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showManualPaymentDialog(AgriculturalItem item, int quantity) {
+    File? selectedImage;
+    bool isUploading = false;
+    final CloudinaryService cloudinaryService = CloudinaryService();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text("Bank Transfer Details"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Please transfer total amount to:"),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Transfer to Farmer:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue[900])),
+                      const SizedBox(height: 8),
+                      _bankRow(Icons.account_balance, "Bank: ${item.bankName ?? 'Contact Farmer'}"),
+                      _bankRow(Icons.numbers, "A/C: ${item.accountNumber ?? 'Contact Farmer'}"),
+                      _bankRow(Icons.person, "Name: ${item.accountName ?? 'Contact Farmer'}"),
+                      const Divider(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Total Amount:", style: TextStyle(fontSize: 12)),
+                          Text("ETB ${item.price * quantity}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text("Upload Screenshot", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 12),
+                if (selectedImage != null)
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover),
+                    ),
+                  ),
+                OutlinedButton.icon(
+                  onPressed: isUploading ? null : () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                    if (pickedFile != null) {
+                      setState(() => selectedImage = File(pickedFile.path));
+                    }
+                  },
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(selectedImage == null ? "Select Screenshot" : "Change Screenshot"),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                ),
+                if (isUploading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: isUploading ? null : () => Navigator.pop(context), child: const Text("Cancel")),
+              ElevatedButton(
+                onPressed: (selectedImage == null || isUploading) ? null : () async {
+                  setState(() => isUploading = true);
+                  
+                  String? uploadedUrl = await cloudinaryService.uploadImage(selectedImage!, folder: 'payment_proofs');
+                  
+                  if (uploadedUrl != null) {
+                    Navigator.pop(context);
+                    _confirmPurchase(item, quantity, "Bank Transfer", proofUrl: uploadedUrl);
+                  } else {
+                    setState(() => isUploading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Failed to upload screenshot. Please try again.")),
+                    );
+                  }
+                },
+                child: const Text("Confirm Transfer"),
+              ),
+            ],
+          );
+        }
+      ),
+    );
+  }
+
+  void _confirmPurchase(AgriculturalItem item, int quantity, String method, {String? proofUrl}) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final order = OrderModel(
+      productId: item.id!,
+      productName: item.name,
+      vendorId: user.uid,
+      vendorName: user.displayName ?? "Vendor",
+      sellerId: item.sellerId,
+      sellerName: item.sellerName,
+      quantity: quantity,
+      totalPrice: item.price * quantity,
+      paymentMethod: method,
+      transactionStatus: "Awaiting Verification",
+      isPaid: false,
+      paymentProofUrl: proofUrl,
+      deliveryAvailable: item.deliveryAvailable,
+      pickupAddress: item.address,
+      pickupLocation: item.location,
+      dropoffAddress: _dropoffAddress,
+      dropoffLocation: _dropoffLocation,
+      driverId: _selectedDriverId,
+      driverName: _selectedDriverName,
+      productUnit: item.unit,
+      productImage: item.imageUrls != null && item.imageUrls!.isNotEmpty ? item.imageUrls!.first : null,
+      productCategory: item.category,
+    );
+
+    setState(() => _isLoading = true);
+    final orderId = await _firestoreService.createOrder(order);
+    setState(() => _isLoading = false);
+
+    if (orderId != null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Icon(Icons.check_circle, color: Colors.green, size: 64),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Purchase Confirmed!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(method == "COD" 
+                ? "The driver will be notified for pickup." 
+                : "Awaiting farmer verification of your payment."),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context); // Go back to list
+              },
+              child: const Text("Awesome"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1320,24 +1674,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Expanded(
                     flex: 2,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.only(
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(8),
                         topRight: Radius.circular(8),
                       ),
                       child: Stack(
                         children: [
-                          GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: productLocation!,
-                              zoom: 12,
+                          FlutterMap(
+                            options: MapOptions(
+                              initialCenter: productLocation!,
+                              initialZoom: 12,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.none,
+                              ),
                             ),
-                            markers: _buildMapMarkers(),
-                            myLocationEnabled: false,
-                            zoomControlsEnabled: false,
-                            scrollGesturesEnabled: false,
-                            zoomGesturesEnabled: false,
-                            rotateGesturesEnabled: false,
-                            tiltGesturesEnabled: false,
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.linkedfarm.app',
+                              ),
+                              MarkerLayer(
+                                markers: _buildMapMarkers(),
+                              ),
+                            ],
                           ),
                           Positioned(
                             bottom: 8,
@@ -1358,7 +1717,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       height: 120,
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
-                        borderRadius: BorderRadius.only(
+                        borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(8),
                           bottomRight: Radius.circular(8),
                         ),
@@ -1366,19 +1725,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Column(
                         children: [
                           Padding(
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             child: Row(
                               children: [
-                                Icon(Icons.local_shipping, size: 16, color: Colors.green),
-                                SizedBox(width: 4),
-                                Text(
+                                const Icon(Icons.local_shipping, size: 16, color: Colors.green),
+                                const SizedBox(width: 4),
+                                const Text(
                                   'Nearby Delivery Drivers',
                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                 ),
-                                Spacer(),
+                                const Spacer(),
                                 Text(
                                   '${_nearbyDrivers.length} available',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                                 ),
                               ],
                             ),
@@ -1399,7 +1758,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Center(
+              child: const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1413,12 +1772,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
           // Show loading or empty state for drivers
           if (_loadingDrivers)
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_nearbyDrivers.isEmpty && productLocation != null)
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16),
               child: Center(
                 child: Column(
@@ -1438,20 +1797,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Set<Marker> _buildMapMarkers() {
-    Set<Marker> markers = {};
+  List<Marker> _buildMapMarkers() {
+    List<Marker> markers = [];
 
     // Product marker
     if (productLocation != null && _item != null) {
       markers.add(
         Marker(
-          markerId: MarkerId('productLocation'),
-          position: productLocation!,
-          infoWindow: InfoWindow(
-            title: _item!.name,
-            snippet: 'Product Location',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          point: productLocation!,
+          width: 40,
+          height: 40,
+          child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
         ),
       );
     }
@@ -1461,13 +1817,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final driver = _nearbyDrivers[i];
       markers.add(
         Marker(
-          markerId: MarkerId('driver_${driver['id']}'),
-          position: LatLng(driver['latitude'], driver['longitude']),
-          infoWindow: InfoWindow(
-            title: driver['name'],
-            snippet: '${driver['distance'].toStringAsFixed(1)} km away - ${driver['vehicleType']}',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          point: LatLng(driver['latitude'], driver['longitude']),
+          width: 32,
+          height: 32,
+          child: const Icon(Icons.local_shipping, color: Colors.green, size: 30),
         ),
       );
     }
@@ -1740,6 +2093,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
+              flex: 1,
+              child: OutlinedButton(
+                onPressed: _navigateToChat,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                ),
+                child: Icon(item.isOutOfStock ? Icons.notification_add : Icons.chat, color: Theme.of(context).colorScheme.primary),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
               child: isSeller
                   ? ElevatedButton.icon(
                       onPressed: () {
@@ -1758,31 +2125,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     )
-                  : ElevatedButton.icon(
-                      onPressed: _navigateToChat,
-                      icon: Icon(item.isOutOfStock ? Icons.notification_add : Icons.chat),
-                      label: Text(
-                        item.isOutOfStock ? 'Ask for Restock' : 'Chat with Seller',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                  : ElevatedButton(
+                      onPressed: item.isOutOfStock ? null : () => _showOrderDialog(item),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        backgroundColor: item.isOutOfStock ? Colors.grey : const Color(0xFF2D5A42),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        item.isOutOfStock ? 'OUT OF STOCK' : 'COMMIT TO BUY',
+                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
                       ),
                     ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _bankRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Colors.blue[700]),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 12, color: Colors.blue[900], fontWeight: FontWeight.w500))),
+        ],
       ),
     );
   }
@@ -1808,7 +2186,7 @@ class EnhancedProductLocationMapScreen extends StatefulWidget {
 }
 
 class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocationMapScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   LatLng? _productLocation;
 
   @override
@@ -1817,19 +2195,16 @@ class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocati
     _productLocation = LatLng(widget.productLat, widget.productLng);
   }
 
-  Set<Marker> _buildMarkers() {
-    Set<Marker> markers = {};
+  List<Marker> _buildMarkers() {
+    List<Marker> markers = [];
 
     // Product marker
     markers.add(
       Marker(
-        markerId: MarkerId('product'),
-        position: _productLocation!,
-        infoWindow: InfoWindow(
-          title: widget.productName,
-          snippet: 'Product Location',
-        ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        point: _productLocation!,
+        width: 45,
+        height: 45,
+        child: const Icon(Icons.location_on, color: Colors.blue, size: 45),
       ),
     );
 
@@ -1838,13 +2213,10 @@ class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocati
       final driver = widget.drivers[i];
       markers.add(
         Marker(
-          markerId: MarkerId('driver_${driver['id']}'),
-          position: LatLng(driver['latitude'], driver['longitude']),
-          infoWindow: InfoWindow(
-            title: driver['name'],
-            snippet: '${driver['distance'].toStringAsFixed(1)} km - ${driver['vehicleType']}',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          point: LatLng(driver['latitude'], driver['longitude']),
+          width: 35,
+          height: 35,
+          child: const Icon(Icons.local_shipping, color: Colors.green, size: 35),
         ),
       );
     }
@@ -1853,37 +2225,24 @@ class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocati
   }
 
   void _zoomToProduct() {
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(_productLocation!, 14),
-    );
+     _mapController.move(_productLocation!, 14);
   }
 
   void _showAllMarkers() {
     if (_productLocation != null && widget.drivers.isNotEmpty) {
       final bounds = _calculateBounds();
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 100),
+      _mapController.fitCamera(
+        CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)),
       );
     }
   }
 
   LatLngBounds _calculateBounds() {
-    double minLat = _productLocation!.latitude;
-    double maxLat = _productLocation!.latitude;
-    double minLng = _productLocation!.longitude;
-    double maxLng = _productLocation!.longitude;
-
+    List<LatLng> points = [_productLocation!];
     for (final driver in widget.drivers) {
-      minLat = min(minLat, driver['latitude']);
-      maxLat = max(maxLat, driver['latitude']);
-      minLng = min(minLng, driver['longitude']);
-      maxLng = max(maxLng, driver['longitude']);
+      points.add(LatLng(driver['latitude'], driver['longitude']));
     }
-
-    return LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
-    );
+    return LatLngBounds.fromPoints(points);
   }
 
   @override
@@ -1893,13 +2252,13 @@ class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocati
         title: Text('${widget.productName} - Delivery Map'),
         actions: [
           IconButton(
-            icon: Icon(Icons.my_location),
+            icon: const Icon(Icons.my_location),
             onPressed: _zoomToProduct,
             tooltip: 'Zoom to Product',
           ),
           if (widget.drivers.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.zoom_out_map),
+              icon: const Icon(Icons.zoom_out_map),
               onPressed: _showAllMarkers,
               tooltip: 'Show All Drivers',
             ),
@@ -1907,15 +2266,21 @@ class _EnhancedProductLocationMapScreenState extends State<EnhancedProductLocati
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            onMapCreated: (controller) => _mapController = controller,
-            initialCameraPosition: CameraPosition(
-              target: _productLocation!,
-              zoom: 12,
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _productLocation!,
+              initialZoom: 12,
             ),
-            markers: _buildMarkers(),
-            myLocationEnabled: true,
-            zoomControlsEnabled: true,
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.linkedfarm.app',
+              ),
+              MarkerLayer(
+                markers: _buildMarkers(),
+              ),
+            ],
           ),
           
           // Drivers info panel
@@ -2137,7 +2502,7 @@ class LiveLocationPage extends StatefulWidget {
 }
 
 class _LiveLocationPageState extends State<LiveLocationPage> {
-  GoogleMapController? mapController;
+  final MapController _mapController = MapController();
   LatLng? currentPos;
 
   @override
@@ -2156,38 +2521,44 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
       if (!snapshot.exists) return;
       final data = snapshot.data() as Map<String, dynamic>;
       if (data["latitude"] == null || data["longitude"] == null) {
-        print("Invalid location data: $data");
         return;
       }
       setState(() {
         currentPos = LatLng(data["latitude"], data["longitude"]);
       });
       // Move map to new location
-      mapController?.animateCamera(
-        CameraUpdate.newLatLng(currentPos!),
-      );
+      _mapController.move(currentPos!, 16);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Driver Location")),
+      appBar: AppBar(title: const Text("Driver Location")),
       body: currentPos == null
-          ? Center(child: Text("Waiting for driver location..."))
-          : GoogleMap(
-              onMapCreated: (controller) => mapController = controller,
-              initialCameraPosition: CameraPosition(
-                target: currentPos!,
-                zoom: 16,
+          ? const Center(child: Text("Waiting for driver location..."))
+          : FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: currentPos!,
+                initialZoom: 16,
               ),
-              markers: {
-                Marker(
-                  markerId: MarkerId("driver"),
-                  position: currentPos!,
-                  infoWindow: InfoWindow(title: "Driver Location"),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.linkedfarm.app',
                 ),
-              },
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: currentPos!,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(Icons.delivery_dining, color: Colors.blue, size: 40),
+                    ),
+                  ],
+                ),
+              ],
             ),
     );
   }

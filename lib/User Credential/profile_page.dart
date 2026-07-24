@@ -1,5 +1,4 @@
 import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/User%20Credential/usermodel.dart';
 import 'package:linkedfarm/User%20Credential/userfirestore.dart';
 import 'package:linkedfarm/Farmers%20View/Cloudnary_Store.dart';
@@ -7,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:linkedfarm/Services/locale_provider.dart';
 import 'package:linkedfarm/Services/locale_provider.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -61,14 +59,28 @@ class _ProfilePageState extends State<ProfilePage> {
         _nameController = TextEditingController(text: user.fullName);
         _phoneController = TextEditingController(text: user.phoneNumber);
         
-        _farmNameController = TextEditingController(text: user.farmName ?? "");
-        _farmLocationController = TextEditingController(text: user.farmLocation ?? "");
-        _farmSizeController = TextEditingController(text: user.farmSize ?? "");
-        _cropsController = TextEditingController(text: user.crops ?? "");
+        // Type-safe access using inheritance
+        if (user is FarmerUser) {
+          _farmNameController = TextEditingController(text: user.farmName ?? "");
+          _farmLocationController = TextEditingController(text: user.farmLocation ?? "");
+          _farmSizeController = TextEditingController(text: user.farmSize ?? "");
+          _cropsController = TextEditingController(text: user.crops ?? "");
+        } else {
+          _farmNameController = TextEditingController();
+          _farmLocationController = TextEditingController();
+          _farmSizeController = TextEditingController();
+          _cropsController = TextEditingController();
+        }
         
-        _businessNameController = TextEditingController(text: user.businessName ?? "");
-        _businessTypeController = TextEditingController(text: user.businessType ?? "");
-        _businessAddressController = TextEditingController(text: user.businessAddress ?? "");
+        if (user is VendorUser) {
+          _businessNameController = TextEditingController(text: user.businessName ?? "");
+          _businessTypeController = TextEditingController(text: user.businessType ?? "");
+          _businessAddressController = TextEditingController(text: user.businessAddress ?? "");
+        } else {
+          _businessNameController = TextEditingController();
+          _businessTypeController = TextEditingController();
+          _businessAddressController = TextEditingController();
+        }
         
         _isLoading = false;
       });
@@ -85,12 +97,12 @@ class _ProfilePageState extends State<ProfilePage> {
         'phoneNumber': _phoneController.text.trim(),
       };
 
-      if (_user!.userType == 'farmer') {
+      if (_user is FarmerUser) {
         updates['farmName'] = _farmNameController.text.trim();
         updates['farmLocation'] = _farmLocationController.text.trim();
         updates['farmSize'] = _farmSizeController.text.trim();
         updates['crops'] = _cropsController.text.trim();
-      } else if (_user!.userType == 'vendor') {
+      } else if (_user is VendorUser) {
         updates['businessName'] = _businessNameController.text.trim();
         updates['businessType'] = _businessTypeController.text.trim();
         updates['businessAddress'] = _businessAddressController.text.trim();
@@ -98,17 +110,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await _userRepo.updateUser(_user!.uid, updates);
       
-      final updatedUser = _user!.copyWith(
-        fullName: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        farmName: updates['farmName'],
-        farmLocation: updates['farmLocation'],
-        farmSize: updates['farmSize'],
-        crops: updates['crops'],
-        businessName: updates['businessName'],
-        businessType: updates['businessType'],
-        businessAddress: updates['businessAddress'],
-      );
+      // Reload user data to get the updated polymorphic object
+      final updatedUser = await _userRepo.getUser(_user!.uid);
 
       setState(() {
         _user = updatedUser;
@@ -116,6 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated!")));
+
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
@@ -132,7 +136,17 @@ class _ProfilePageState extends State<ProfilePage> {
       
       if (imageUrl != null) {
         await _userRepo.updateUser(_user!.uid, {'photoUrl': imageUrl});
-        final updatedUser = _user!.copyWith(photoUrl: imageUrl);
+        
+        // Use pattern matching or casting since copyWith is subclass-specific
+        UserModel updatedUser;
+        if (_user is FarmerUser) {
+          updatedUser = (_user as FarmerUser).copyWith(photoUrl: imageUrl);
+        } else if (_user is VendorUser) {
+          updatedUser = (_user as VendorUser).copyWith(photoUrl: imageUrl);
+        } else {
+          updatedUser = (_user as GenericAppUser).copyWith(photoUrl: imageUrl);
+        }
+        
         setState(() {
           _user = updatedUser;
           _isLoading = false;
@@ -177,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
               ),
               child: Column(
                 children: [
@@ -226,7 +240,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -263,10 +277,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       _buildEditTile(Icons.grass, "Crops", _cropsController),
                     ]
                   : [
-                      _buildInfoTile(Icons.agriculture, "Farm Name", _user!.farmName ?? "N/A"),
-                      _buildInfoTile(Icons.location_on, "Location", _user!.farmLocation ?? "N/A"),
-                      _buildInfoTile(Icons.settings_overscan, "Size", _user!.farmSize ?? "N/A"),
-                      _buildInfoTile(Icons.grass, "Crops", _user!.crops ?? "N/A"),
+                      _buildInfoTile(Icons.agriculture, "Farm Name", (_user as FarmerUser).farmName ?? "N/A"),
+                      _buildInfoTile(Icons.location_on, "Location", (_user as FarmerUser).farmLocation ?? "N/A"),
+                      _buildInfoTile(Icons.settings_overscan, "Size", (_user as FarmerUser).farmSize ?? "N/A"),
+                      _buildInfoTile(Icons.grass, "Crops", (_user as FarmerUser).crops ?? "N/A"),
                     ],
               ),
 
@@ -280,10 +294,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       _buildEditTile(Icons.location_on, "Address", _businessAddressController),
                     ]
                   : [
-                      _buildInfoTile(Icons.store, "Business Name", _user!.businessName ?? "N/A"),
-                      _buildInfoTile(Icons.business_center, "Type", _user!.businessType ?? "N/A"),
-                      _buildInfoTile(Icons.location_on, "Address", _user!.businessAddress ?? "N/A"),
+                      _buildInfoTile(Icons.store, "Business Name", (_user as VendorUser).businessName ?? "N/A"),
+                      _buildInfoTile(Icons.business_center, "Type", (_user as VendorUser).businessType ?? "N/A"),
+                      _buildInfoTile(Icons.location_on, "Address", (_user as VendorUser).businessAddress ?? "N/A"),
                     ],
+
               ),
 
             // Status Section
@@ -314,7 +329,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     foregroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     elevation: 0,
-                    side: BorderSide(color: Colors.red.withOpacity(0.3))
+                    side: BorderSide(color: Colors.red.withValues(alpha: 0.3))
                   ),
                   child: const Center(child: Text("LOGOUT", style: TextStyle(fontWeight: FontWeight.bold))),
                 ),

@@ -202,40 +202,40 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    bool isMe = data['senderId'] == _auth.currentUser!.uid;
-    String? mediaUrl = data['mediaUrl'];
-    String? typeStr = data['messageType'];
+    BaseMessage message = BaseMessage.fromMap(data);
+    bool isMe = message.senderId == _auth.currentUser!.uid;
 
     return Column(
       crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         GestureDetector(
           onTap: () {
-            if (typeStr == MessageType.image.name && mediaUrl != null) {
+            if (message is ImageMessage) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ImagePreviewPage(imageUrl: mediaUrl),
+                  builder: (context) => ImagePreviewPage(imageUrl: message.mediaUrl),
                 ),
               );
-            } else if (typeStr == MessageType.video.name && mediaUrl != null) {
+            } else if (message is VideoMessage) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => VideoPlayerPage(
-                    videoUrl: mediaUrl,
-                    title: data['fileName'] ?? "Video",
+                    videoUrl: message.mediaUrl,
+                    title: message.fileName ?? "Video",
                   ),
                 ),
               );
             }
           },
           child: MessageBubble(
-            data: data,
+            message: message,
             isMe: isMe,
-            senderName: data['senderEmail'],
+            senderName: message.senderEmail,
           ),
         ),
+
         if (_group != null && _group!.isChannel)
           Padding(
             padding: EdgeInsets.only(left: isMe ? 0 : 50, right: isMe ? 50 : 0, bottom: 10),

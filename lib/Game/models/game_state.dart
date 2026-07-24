@@ -102,7 +102,7 @@ class GameState extends ChangeNotifier {
   // Activity Scores (0.0 to 5.0)
   double _landPrepScore = 0.0;
   double _cropSelectionScore = 0.0;
-  double _plantingTimeScore = 0.0;
+  final double _plantingTimeScore = 0.0;
   double _inputManagementScore = 0.0;
   
   bool _isGameOver = false;
@@ -197,9 +197,9 @@ class GameState extends ChangeNotifier {
           .doc(log.id)
           .set(log.toJson());
       
-      print('✅ Daily log saved to Firestore: ${log.id}');
+      debugPrint('✅ Daily log saved to Firestore: ${log.id}');
     } catch (e) {
-      print('❌ Error saving daily log to Firestore: $e');
+      debugPrint('❌ Error saving daily log to Firestore: $e');
     }
   }
   
@@ -223,9 +223,9 @@ class GameState extends ChangeNotifier {
           .toList();
       
       notifyListeners();
-      print('✅ Loaded ${_dailyLogs.length} daily logs from Firestore');
+      debugPrint('✅ Loaded ${_dailyLogs.length} daily logs from Firestore');
     } catch (e) {
-      print('❌ Error loading daily logs from Firestore: $e');
+      debugPrint('❌ Error loading daily logs from Firestore: $e');
     }
   }
 
@@ -308,7 +308,7 @@ class GameState extends ChangeNotifier {
 
     _isGameOver = false;
     _customActivities = [];
-    _gameLog = ["Day 1: Started your farming journey on ${size} ha of ${soil.name} soil."];
+    _gameLog = ["Day 1: Started your farming journey on $size ha of ${soil.name} soil."];
     _history.clear();
     _history.add({
       'day': 1,

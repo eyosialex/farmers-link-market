@@ -1066,4 +1066,61 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adviceFeedIntro =>
       'Browse the latest tips and advice from agricultural experts.';
+
+  @override
+  String get tabLearn => 'Learn';
+
+  @override
+  String get tabAiPro => 'AI Agronomist';
+
+  @override
+  String get tabPulse => 'Farming Pulse';
+
+  @override
+  String get learnHeroTitle => 'Confidence in Farming';
+
+  @override
+  String get learnHeroSub =>
+      'Modern tools, science, and business skills for the modern farmer.';
+
+  @override
+  String get freeCourses => 'Free Courses';
+
+  @override
+  String get premiumLearning => 'Premium Learning';
+
+  @override
+  String get predictiveAiTitle => 'Predictive Farming AI';
+
+  @override
+  String get expectedYield => 'Expected Yield Prediction:';
+
+  @override
+  String get yieldHigh => 'High';
+
+  @override
+  String get yieldAvg => 'Average to High';
+
+  @override
+  String get yieldLow => 'Low';
+
+  @override
+  String get weatherOutlook => '5-Day Weather Outlook';
+
+  @override
+  String get soilVitality => 'Soil Vitality';
+
+  @override
+  String get pHLevel => 'pH Level';
+
+  @override
+  String get aiAnalysisResult => 'AI Recommendations';
+
+  @override
+  String get aiDiagnosisIntro =>
+      'Your analysis results will appear here. AI can recommend pesticides, herbicides, and fungicides.';
+
+  @override
+  String get visionAnalysisInfo =>
+      'Our AI uses multi-modal vision to identify infections on crops and recommend precise treatments.';
 }

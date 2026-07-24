@@ -35,6 +35,9 @@ class _SellItemState extends State<SellItem> {
   final TextEditingController _sellerNameController = TextEditingController();
   final TextEditingController _contactInfoController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
+  final TextEditingController _bankNameController = TextEditingController();
+  final TextEditingController _accountNumberController = TextEditingController();
+  final TextEditingController _accountNameController = TextEditingController();
 
   // Variables
   String _selectedCategory = '';
@@ -148,6 +151,9 @@ class _SellItemState extends State<SellItem> {
     if (product.tags != null) {
       _tagsController.text = ""; 
     }
+    _bankNameController.text = product.bankName ?? '';
+    _accountNumberController.text = product.accountNumber ?? '';
+    _accountNameController.text = product.accountName ?? '';
   }
 
   void _loadCurrentUserInfo() {
@@ -338,6 +344,18 @@ class _SellItemState extends State<SellItem> {
       _showSnackBar(AppLocalizations.of(context)!.addAtLeastOnePhoto);
       return false;
     }
+    if (_bankNameController.text.isEmpty) {
+      _showSnackBar("Please enter your Bank Name");
+      return false;
+    }
+    if (_accountNumberController.text.isEmpty) {
+      _showSnackBar("Please enter your Account Number");
+      return false;
+    }
+    if (_accountNameController.text.isEmpty) {
+      _showSnackBar("Please enter your Account Name");
+      return false;
+    }
     return true;
   }
 
@@ -413,6 +431,9 @@ class _SellItemState extends State<SellItem> {
         deliveryAvailable: _deliveryAvailable,
         tags: _tags.isNotEmpty ? _tags : null,
         isSynced: false,
+        bankName: _bankNameController.text,
+        accountNumber: _accountNumberController.text,
+        accountName: _accountNameController.text,
       );
 
       // 4. Save to Local Hive BOX first (Safety)
@@ -552,6 +573,9 @@ class _SellItemState extends State<SellItem> {
       _existingImageUrls.clear();
       _selectedImages.clear();
       _tags.clear();
+      _bankNameController.clear();
+      _accountNumberController.clear();
+      _accountNameController.clear();
     });
     _loadCurrentUserInfo(); // Reload user info after clearing
     _showSnackBar(AppLocalizations.of(context)!.formCleared);
@@ -798,6 +822,16 @@ class _SellItemState extends State<SellItem> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // Payment Information Section
+            _buildSectionHeader("Payment Information (For Bank Transfer)"),
+            _buildTextField(_bankNameController, "Bank Name (e.g. CBE, Awash)", Icons.account_balance),
+            const SizedBox(height: 12),
+            _buildTextField(_accountNumberController, "Account Number", Icons.numbers),
+            const SizedBox(height: 12),
+            _buildTextField(_accountNameController, "Account Name (Full Name)", Icons.person_outline),
+            
             const SizedBox(height: 20),
 
             // Location Section

@@ -68,11 +68,12 @@ class _SharedDeliveryScreenState extends State<SharedDeliveryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(vendor.businessName ?? vendor.fullName, 
+                    Text(vendor is VendorUser ? (vendor as VendorUser).businessName ?? vendor.fullName : vendor.fullName, 
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text(vendor.businessAddress ?? "Address not specified", 
+                    Text(vendor is VendorUser ? (vendor as VendorUser).businessAddress ?? "Address not specified" : "Address not specified", 
                         style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
+
                 ),
               ),
               Chip(

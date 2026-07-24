@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:linkedfarm/Services/io_compatibility.dart' if (dart.library.html) 'package:linkedfarm/Services/web_compatibility.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:linkedfarm/Services/chat_service.dart';
 import 'package:linkedfarm/Chat/chat_model.dart';
@@ -14,6 +12,8 @@ import 'package:linkedfarm/User%20Credential/usermodel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'package:linkedfarm/Chat/chat_interface.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -29,12 +29,11 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with ChatLogicMixin implements IChatPage {
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription? _webSocketSubscription;
-  bool _showEmoji = false;
   bool _isUploading = false;
 
   @override
@@ -53,18 +52,22 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  @override
   void sendMessage() async {
-    if (_messageController.text.isNotEmpty) {
+    if (isValidMessage(_messageController.text)) {
       await _chatService.sendMessage(
         widget.receiverUserID,
-        _messageController.text,
+        _messageController.text.trim(),
         type: MessageType.text,
       );
       _messageController.clear();
     }
   }
 
-  Future<void> _pickAndSendMedia() async {
+  @override
+  Future<void> pickAndSendMedia() async {
+    // Media picking logic ...
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'png', 'mp4', 'mp3', 'pdf'],
@@ -181,42 +184,37 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    bool isMe = data['senderId'] == _auth.currentUser!.uid;
-    String? mediaUrl = data['mediaUrl'];
-    String? typeStr = data['messageType'];
+    BaseMessage message = BaseMessage.fromMap(data);
+    bool isMe = message.senderId == _auth.currentUser!.uid;
 
     return GestureDetector(
       onTap: () {
-        if (typeStr == MessageType.image.name && mediaUrl != null) {
+        if (message is ImageMessage) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ImagePreviewPage(imageUrl: mediaUrl),
+              builder: (context) => ImagePreviewPage(imageUrl: message.mediaUrl),
             ),
           );
-        } else if (typeStr == MessageType.video.name && mediaUrl != null) {
+        } else if (message is VideoMessage) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => VideoPlayerPage(
-                videoUrl: mediaUrl,
-                title: data['fileName'] ?? "Video",
+                videoUrl: message.mediaUrl,
+                title: message.fileName ?? "Video",
               ),
             ),
           );
         }
       },
       child: MessageBubble(
-        data: data,
+        message: message,
         isMe: isMe,
       ),
     );
   }
 
-  String _formatTimestamp(Timestamp timestamp) {
-    DateTime date = timestamp.toDate();
-    return "${date.hour}:${date.minute.toString().padLeft(2, '0')}";
-  }
 
   String _formatLastSeen(DateTime lastSeen) {
     final now = DateTime.now();
@@ -239,7 +237,7 @@ class _ChatPageState extends State<ChatPage> {
     return ChatInputField(
       controller: _messageController,
       onSend: sendMessage,
-      onAttach: _pickAndSendMedia,
+      onAttach: pickAndSendMedia,
       isUploading: _isUploading,
     );
   }

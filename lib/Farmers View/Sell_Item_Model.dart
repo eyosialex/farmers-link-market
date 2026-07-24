@@ -83,6 +83,15 @@ class AgriculturalItem extends HiveObject {
   @HiveField(25)
   List<String>? localImagePaths;
 
+  @HiveField(26)
+  String? bankName;
+
+  @HiveField(27)
+  String? accountNumber;
+
+  @HiveField(28)
+  String? accountName;
+
   AgriculturalItem({
     this.id,
     required this.name,
@@ -108,6 +117,9 @@ class AgriculturalItem extends HiveObject {
     this.likedBy = const [],
     this.viewedBy = const [],
     this.isSynced = false,
+    this.bankName,
+    this.accountNumber,
+    this.accountName,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now(),
@@ -141,6 +153,9 @@ class AgriculturalItem extends HiveObject {
       'isSynced': isSynced,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'bankName': bankName,
+      'accountNumber': accountNumber,
+      'accountName': accountName,
     };
   }
 
@@ -179,6 +194,9 @@ class AgriculturalItem extends HiveObject {
       isSynced: data['isSynced'] ?? true,
       createdAt: DateTime.parse(data['createdAt']),
       updatedAt: DateTime.parse(data['updatedAt']),
+      bankName: data['bankName'],
+      accountNumber: data['accountNumber'],
+      accountName: data['accountName'],
     );
   }
 
@@ -207,6 +225,9 @@ class AgriculturalItem extends HiveObject {
     List<String>? likedBy,
     List<String>? viewedBy,
     bool? isSynced,
+    String? bankName,
+    String? accountNumber,
+    String? accountName,
   }) {
     return AgriculturalItem(
       id: id ?? this.id,
@@ -233,6 +254,9 @@ class AgriculturalItem extends HiveObject {
       likedBy: likedBy ?? this.likedBy,
       viewedBy: viewedBy ?? this.viewedBy,
       isSynced: isSynced ?? this.isSynced,
+      bankName: bankName ?? this.bankName,
+      accountNumber: accountNumber ?? this.accountNumber,
+      accountName: accountName ?? this.accountName,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

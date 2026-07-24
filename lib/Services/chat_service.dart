@@ -9,8 +9,9 @@ import 'package:linkedfarm/Chat/group_model.dart';
 import 'package:linkedfarm/Farmers%20View/Cloudnary_Store.dart';
 import 'dart:convert'; // Added for json.decode
 import 'package:http/http.dart' as http; // Added for http requests
+import 'package:linkedfarm/Chat/chat_interface.dart';
 
-class ChatService extends ChangeNotifier {
+class ChatService extends ChangeNotifier implements IChatService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   // Cloudinary Service instead of Firebase Storage
@@ -30,24 +31,69 @@ class ChatService extends ChangeNotifier {
   // EXPOSE WEBSOCKET STREAM
   Stream get webSocketStream => _webSocketService.stream;
 
-  // SEND MESSAGE (Updated for Media)
+  // SEND MESSAGE (Updated for Polymorphism)
+  @override
   Future<void> sendMessage(String receiverID, String message, {MessageType type = MessageType.text, String? mediaUrl, String? fileName}) async {
     final String currentUserId = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;
     final Timestamp timestamp = Timestamp.now();
+    
     // Broadcast via WebSocket
     _webSocketService.sendMessage(currentUserId, receiverID, message);
 
-    Message newMessage = Message(
-      senderId: currentUserId,
-      senderEmail: currentUserEmail,
-      receiverId: receiverID,
-      message: message,
-      timestamp: timestamp,
-      messageType: type,
-      mediaUrl: mediaUrl,
-      fileName: fileName,
-    );
+    BaseMessage newMessage;
+    
+    switch (type) {
+      case MessageType.image:
+        newMessage = ImageMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          receiverId: receiverID,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+        );
+        break;
+      case MessageType.video:
+        newMessage = VideoMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          receiverId: receiverID,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+        );
+        break;
+      case MessageType.audio:
+        newMessage = AudioMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          receiverId: receiverID,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+        );
+        break;
+      case MessageType.pdf:
+        newMessage = PdfMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          receiverId: receiverID,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+        );
+        break;
+      case MessageType.text:
+      default:
+        newMessage = TextMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          receiverId: receiverID,
+          content: message,
+          timestamp: timestamp,
+        );
+    }
 
     List<String> ids = [currentUserId, receiverID];
     ids.sort();
@@ -58,6 +104,7 @@ class ChatService extends ChangeNotifier {
         .doc(chatRoomId)
         .collection('messages')
         .add(newMessage.toMap());
+
     // Update 'latest_message' for Inbox
     var updateData = {
       'chatRoomId': chatRoomId,
@@ -88,8 +135,9 @@ class ChatService extends ChangeNotifier {
         .set(receiverUpdateData, SetOptions(merge: true));
   }
 
-  // MEDIA UPLOAD (Updated to use Cloudinary)
-  Future<String> uploadMedia(File file, String folder) async {
+  // MEDIA UPLOAD
+  @override
+  Future<String> uploadMedia(dynamic file, String folder) async {
     String? mediaUrl = await _cloudinaryService.uploadFile(file, folder: folder);
     if (mediaUrl != null) {
       return mediaUrl;
@@ -120,7 +168,7 @@ class ChatService extends ChangeNotifier {
       groupId: groupRef.id,
       name: groupName,
       members: memberIds,
-      adminIds: [currentUserId], // The creator is the admin
+      adminIds: [currentUserId],
       type: type,
       lastMessage: type == 'channel' ? "Channel created" : "Group created",
       lastSenderId: currentUserId,
@@ -135,17 +183,64 @@ class ChatService extends ChangeNotifier {
     final String currentUserEmail = _auth.currentUser!.email!;
     final Timestamp timestamp = Timestamp.now();
 
-    Message newMessage = Message(
-      senderId: currentUserId,
-      senderEmail: currentUserEmail,
-      groupId: groupId,
-      message: message,
-      timestamp: timestamp,
-      messageType: type,
-      mediaUrl: mediaUrl,
-      fileName: fileName,
-      parentMessageId: parentMessageId,
-    );
+    BaseMessage newMessage;
+    
+    switch (type) {
+      case MessageType.image:
+        newMessage = ImageMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          groupId: groupId,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+          parentMessageId: parentMessageId,
+        );
+        break;
+      case MessageType.video:
+        newMessage = VideoMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          groupId: groupId,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+          parentMessageId: parentMessageId,
+        );
+        break;
+      case MessageType.audio:
+        newMessage = AudioMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          groupId: groupId,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+          parentMessageId: parentMessageId,
+        );
+        break;
+      case MessageType.pdf:
+        newMessage = PdfMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          groupId: groupId,
+          timestamp: timestamp,
+          mediaUrl: mediaUrl!,
+          fileName: fileName,
+          parentMessageId: parentMessageId,
+        );
+        break;
+      case MessageType.text:
+      default:
+        newMessage = TextMessage(
+          senderId: currentUserId,
+          senderEmail: currentUserEmail,
+          groupId: groupId,
+          content: message,
+          timestamp: timestamp,
+          parentMessageId: parentMessageId,
+        );
+    }
 
     // Broadcast via WebSocket
     _webSocketService.sendMessage(currentUserId, groupId, message);
@@ -164,6 +259,7 @@ class ChatService extends ChangeNotifier {
       });
     }
   }
+
 
   Stream<QuerySnapshot> getGroupMessages(String groupId) {
     return _firestore

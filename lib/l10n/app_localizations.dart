@@ -2085,6 +2085,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse the latest tips and advice from agricultural experts.'**
   String get adviceFeedIntro;
+
+  /// No description provided for @tabLearn.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn'**
+  String get tabLearn;
+
+  /// No description provided for @tabAiPro.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Agronomist'**
+  String get tabAiPro;
+
+  /// No description provided for @tabPulse.
+  ///
+  /// In en, this message translates to:
+  /// **'Farming Pulse'**
+  String get tabPulse;
+
+  /// No description provided for @learnHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence in Farming'**
+  String get learnHeroTitle;
+
+  /// No description provided for @learnHeroSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Modern tools, science, and business skills for the modern farmer.'**
+  String get learnHeroSub;
+
+  /// No description provided for @freeCourses.
+  ///
+  /// In en, this message translates to:
+  /// **'Free Courses'**
+  String get freeCourses;
+
+  /// No description provided for @premiumLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Learning'**
+  String get premiumLearning;
+
+  /// No description provided for @predictiveAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Predictive Farming AI'**
+  String get predictiveAiTitle;
+
+  /// No description provided for @expectedYield.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected Yield Prediction:'**
+  String get expectedYield;
+
+  /// No description provided for @yieldHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get yieldHigh;
+
+  /// No description provided for @yieldAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Average to High'**
+  String get yieldAvg;
+
+  /// No description provided for @yieldLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get yieldLow;
+
+  /// No description provided for @weatherOutlook.
+  ///
+  /// In en, this message translates to:
+  /// **'5-Day Weather Outlook'**
+  String get weatherOutlook;
+
+  /// No description provided for @soilVitality.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil Vitality'**
+  String get soilVitality;
+
+  /// No description provided for @pHLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'pH Level'**
+  String get pHLevel;
+
+  /// No description provided for @aiAnalysisResult.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Recommendations'**
+  String get aiAnalysisResult;
+
+  /// No description provided for @aiDiagnosisIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your analysis results will appear here. AI can recommend pesticides, herbicides, and fungicides.'**
+  String get aiDiagnosisIntro;
+
+  /// No description provided for @visionAnalysisInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Our AI uses multi-modal vision to identify infections on crops and recommend precise treatments.'**
+  String get visionAnalysisInfo;
 }
 
 class _AppLocalizationsDelegate

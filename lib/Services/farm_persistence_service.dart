@@ -178,12 +178,11 @@ class FarmPersistenceService {
         bool categoryMatch = listedItem.category.toLowerCase() == wanted.category.toLowerCase();
 
         if (nameMatch || categoryMatch) {
-          final notification = AppNotification(
+          final notification = MatchNotification(
             id: "",
             title: "Product Match Found! 🌾",
             message: "A farmer just listed ${listedItem.name}, which matches your request!",
             timestamp: DateTime.now(),
-            type: 'match',
             isRead: false,
           );
 
@@ -211,12 +210,11 @@ class FarmPersistenceService {
         bool categoryMatch = item.category.toLowerCase() == wanted.category.toLowerCase();
 
         if (nameMatch || categoryMatch) {
-          final notification = AppNotification(
+          final notification = MatchNotification(
             id: "",
             title: "High Demand Alert! 💰",
             message: "A vendor is looking for ${wanted.productName}. This is a great chance for profit!",
             timestamp: DateTime.now(),
-            type: 'match',
             isRead: false,
           );
 

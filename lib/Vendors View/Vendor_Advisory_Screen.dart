@@ -10,7 +10,6 @@ class VendorAdvisoryScreen extends StatefulWidget {
 }
 
 class _VendorAdvisoryScreenState extends State<VendorAdvisoryScreen> {
-  final GeminiService _geminiService = GeminiService();
   final List<Map<String, String>> _consultationHistory = [
     {
       "role": "ai",
@@ -32,7 +31,7 @@ class _VendorAdvisoryScreenState extends State<VendorAdvisoryScreen> {
 
     try {
       final prompt = "Act as a professional retail and grocery business consultant in Ethiopia. Help this vendor with their query: $userMessage. Provide actionable advice on procurement, pricing, or storage.";
-      final response = await _geminiService.getChatResponse(prompt);
+      final response = await GeminiService.getChatResponse(prompt);
       setState(() {
         _consultationHistory.add({"role": "ai", "content": response});
         _isTyping = false;
