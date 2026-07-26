@@ -50,9 +50,9 @@ class _FarmersHomePageState extends State<FarmersHomePage> {
 
   static const _tabs = [
     _HomeBody(),
-    _FarmTab(),
-    MarketPricesPage(),
     _AdvisorTab(),
+    MarketPricesPage(),
+    ChatListScreen(),
     FarmerProfilePage(),
   ];
 
@@ -60,7 +60,7 @@ class _FarmersHomePageState extends State<FarmersHomePage> {
     _NavItem(icon: Icons.home_rounded, label: 'Home'),
     _NavItem(icon: Icons.agriculture_rounded, label: 'Farm'),
     _NavItem(icon: Icons.storefront_outlined, label: 'Market'),
-    _NavItem(icon: Icons.school_outlined, label: 'Advisor'),
+    _NavItem(icon: Icons.school_outlined, label: 'News'),
     _NavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
@@ -1234,7 +1234,7 @@ class _AdvisorTabState extends State<_AdvisorTab>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 6, vsync: this);
+    _tab = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -1256,7 +1256,7 @@ class _AdvisorTabState extends State<_AdvisorTab>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Advisor Hub',
+                    'Farm Hub',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -1291,10 +1291,6 @@ class _AdvisorTabState extends State<_AdvisorTab>
                     text: 'Pulse',
                   ),
                   Tab(icon: Icon(Icons.map_rounded, size: 16), text: 'Land'),
-                  Tab(
-                    icon: Icon(Icons.agriculture_rounded, size: 16),
-                    text: 'Farm Plan',
-                  ),
                 ],
               ),
             ],
@@ -1309,7 +1305,6 @@ class _AdvisorTabState extends State<_AdvisorTab>
               AiAgronomistProTab(),
               FarmingPulseTab(),
               LandMapPage(),
-              GameDashboard(),
             ],
           ),
         ),
