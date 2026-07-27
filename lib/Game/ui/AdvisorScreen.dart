@@ -17,8 +17,8 @@ class AdvisorScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(l10n.smartAdvisory),
           centerTitle: true,
-          backgroundColor: Colors.green[800],
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
           elevation: 0,
           actions: [
             const SizedBox(width: 8),
@@ -27,6 +27,8 @@ class AdvisorScreen extends StatelessWidget {
           bottom: TabBar(
             indicatorColor: Colors.amber,
             indicatorWeight: 4,
+            labelColor: Colors.black87,
+            unselectedLabelColor: Colors.grey,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             tabs: [
               Tab(text: l10n.aiAgronomist),
@@ -34,7 +36,7 @@ class AdvisorScreen extends StatelessWidget {
             ],
           ),
         ),
-        backgroundColor: Colors.green[50], // Premium background tone
+        backgroundColor: Colors.white, // Premium background tone
         body: const TabBarView(
           children: [
             AiAdvisorTab(),

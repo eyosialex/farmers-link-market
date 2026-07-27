@@ -6,32 +6,32 @@ import 'package:flutter/material.dart';
 /// ─────────────────────────────────────────
 abstract class FarmTheme {
   // ── Brand palette ──
-  static const Color bg          = Color(0xFF0B1A12); // Deep forest black-green
-  static const Color surface     = Color(0xFF132218); // Card surface
-  static const Color surfaceAlt  = Color(0xFF1A2E20); // Slightly lighter card
-  static const Color border      = Color(0xFF2A4030); // Subtle border
-  static const Color accent      = Color(0xFF4ADE80); // Bright green accent
-  static const Color accentWarm  = Color(0xFFFBBF24); // Amber / warm
-  static const Color accentRed   = Color(0xFFEF4444); // Risk red
-  static const Color accentBlue  = Color(0xFF60A5FA); // Info blue / rain
-  static const Color textPrimary = Color(0xFFE2E8F0); // Near-white
-  static const Color textMuted   = Color(0xFF6B8F71); // Muted sage
+  static const Color bg          = Color(0xFFF5F6FA); // App light background
+  static const Color surface     = Colors.white;      // Card surface
+  static const Color surfaceAlt  = Color(0xFFF5F6FA); // Slightly darker card/bg
+  static const Color border      = Color(0xFFE0E0E0); // Subtle border
+  static const Color accent      = Color(0xFF2E7D32); // App primary green
+  static const Color accentWarm  = Colors.orange;     // Amber / warm
+  static const Color accentRed   = Colors.red;        // Risk red
+  static const Color accentBlue  = Colors.blue;       // Info blue / rain
+  static const Color textPrimary = Colors.black87;    // Dark text
+  static const Color textMuted   = Colors.grey;       // Muted text
 
   // ── Gradients ──
   static const LinearGradient bgGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0B1A12), Color(0xFF0F2318), Color(0xFF091510)],
+    colors: [Color(0xFFF5F6FA), Color(0xFFF5F6FA)],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1A2E20), Color(0xFF132218)],
+    colors: [Colors.white, Colors.white],
   );
 
   static LinearGradient accentGradient = LinearGradient(
-    colors: [accent.withOpacity(0.25), accent.withOpacity(0.05)],
+    colors: [accent.withOpacity(0.15), accent.withOpacity(0.02)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -67,10 +67,10 @@ abstract class FarmTheme {
   );
 
   static BoxDecoration get cardHighlight => BoxDecoration(
-    gradient: cardGradient,
+    color: Colors.white,
     borderRadius: BorderRadius.circular(radiusMd),
     border: Border.all(color: accent.withOpacity(0.4), width: 1.5),
-    boxShadow: [BoxShadow(color: accent.withOpacity(0.08), blurRadius: 12, spreadRadius: 1)],
+    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, spreadRadius: 1)],
   );
 
   static BoxDecoration get pill => BoxDecoration(
@@ -82,7 +82,7 @@ abstract class FarmTheme {
   // ── Shared AppBar ──
   static AppBar appBar(BuildContext context, String title, {List<Widget>? actions}) {
     return AppBar(
-      backgroundColor: const Color(0xFF0B1A12),
+      backgroundColor: Colors.white,
       foregroundColor: textPrimary,
       elevation: 0,
       centerTitle: true,
@@ -133,7 +133,7 @@ abstract class FarmTheme {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: accent,
-        foregroundColor: const Color(0xFF0B1A12),
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         elevation: 0,

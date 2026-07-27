@@ -68,7 +68,7 @@ class MyLandsScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddLandDialog(context),
         backgroundColor: FarmTheme.accent,
-        foregroundColor: const Color(0xFF0B1A12),
+        foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add_location_alt, size: 20),
         label: Text(

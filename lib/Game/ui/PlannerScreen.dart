@@ -34,8 +34,8 @@ class _PlannerScreenState extends State<PlannerScreen>
     return Scaffold(
       backgroundColor: FarmTheme.bg,
       appBar: AppBar(
-        backgroundColor: FarmTheme.bg,
-        foregroundColor: FarmTheme.textPrimary,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
         title: Text(l10n.plannerBtn, style: FarmTheme.headingMd),
         iconTheme: const IconThemeData(color: FarmTheme.accent),

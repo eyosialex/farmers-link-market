@@ -96,8 +96,8 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.dayTrackerTitle(gameState.currentDay)),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: [
           const SizedBox(width: 16),
           const SizedBox(width: 16),

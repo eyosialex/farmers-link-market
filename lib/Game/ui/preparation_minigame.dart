@@ -45,8 +45,8 @@ class _PreparationScreenState extends State<PreparationScreen> with SingleTicker
     return Scaffold(
       appBar: AppBar(
         title: const Text("Prepare Your Land"),
-        backgroundColor: Colors.brown[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: [
           const SizedBox(width: 8),
           const SizedBox(width: 8),
