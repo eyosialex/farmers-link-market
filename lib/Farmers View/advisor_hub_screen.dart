@@ -46,14 +46,16 @@ class _AdvisorHubScreenState extends State<AdvisorHubScreen>
           'Advisor Hub',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.green[800],
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           indicatorColor: Colors.amber,
           indicatorWeight: 3,
+          labelColor: Colors.black87,
+          unselectedLabelColor: Colors.grey,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 12,

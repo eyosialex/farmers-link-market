@@ -600,8 +600,8 @@ class _SellItemState extends State<SellItem> {
           ? AppLocalizations.of(context)!.editProduct 
           : AppLocalizations.of(context)!.sellProduceAction),
         centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

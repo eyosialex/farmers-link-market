@@ -13,8 +13,8 @@ class AdviceFeedScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.expertAdviceTitle),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

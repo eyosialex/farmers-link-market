@@ -90,8 +90,8 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
                 onChanged: (val) => setState(() {}),
               )
             : const Text("Chat"),
-        backgroundColor: Colors.green[800],
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -115,8 +115,8 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
             Tab(text: "GROUPS"),
           ],
           indicatorColor: Colors.orange[400],
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          labelColor: Colors.black87,
+          unselectedLabelColor: Colors.grey,
         ),
       ),
       body: _isSearching ? _buildSearchResults() : TabBarView(

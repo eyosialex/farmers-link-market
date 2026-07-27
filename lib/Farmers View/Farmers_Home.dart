@@ -1011,21 +1011,21 @@ class _FarmTabState extends State<_FarmTab> {
     return Column(
       children: [
         Container(
-          color: _kGreen,
+          color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
               const Text(
                 'My Farm',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.black87,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
+                icon: const Icon(Icons.add, color: Colors.black87),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => SellItem()),
@@ -1248,7 +1248,7 @@ class _AdvisorTabState extends State<_AdvisorTab>
     return Column(
       children: [
         Container(
-          color: _kGreen,
+          color: Colors.white,
           child: Column(
             children: [
               const Padding(
@@ -1258,7 +1258,7 @@ class _AdvisorTabState extends State<_AdvisorTab>
                   child: Text(
                     'Farm Hub',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1270,8 +1270,8 @@ class _AdvisorTabState extends State<_AdvisorTab>
                 isScrollable: true,
                 indicatorColor: Colors.amber,
                 indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white60,
+                labelColor: _kGreen,
+                unselectedLabelColor: Colors.grey,
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
